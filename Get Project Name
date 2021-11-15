@@ -1,0 +1,4 @@
+                //Get the project name from model path
+                var modelPath = doc.GetWorksharingCentralModelPath();
+                var FileName = ModelPathUtils.ConvertModelPathToUserVisiblePath(modelPath);
+                string File = FileName.Substring(FileName.Length - 29, 29);
