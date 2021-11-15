@@ -1,0 +1,127 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.Attributes;
+using Autodesk.Revit.ApplicationServices;
+using RvtApplication = Autodesk.Revit.ApplicationServices.Application;
+using RvtDocument = Autodesk.Revit.DB.Document;
+
+using System.IO;
+
+namespace ArchiveShare
+{
+    [Transaction(TransactionMode.ReadOnly)]
+
+    public class ArchiveShare : IExternalCommand
+
+    {
+        private object document;
+        private string root;
+        private object listFilesFound;
+        private object rvtApp;
+        private object revitApplication;
+
+        public object Modelpathutils { get; private set; }
+
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            // Get UI Document
+            UIDocument uidoc = commandData.Application.ActiveUIDocument;
+            UIApplication uiapp = commandData.Application;
+            Document doc = uidoc.Document;
+            ProjectInfo projectInfo = doc.ProjectInformation;
+
+            try
+            {
+
+                //Get The Root File Location
+                String RootFile = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB_RootFile").AsString();
+
+                // Model Revision
+                String modRev = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Revision").AsString();
+
+                //Archive Suffix
+                string ArchiveSuffix = "\\BIM\\04 Archived\\General\\";
+
+                //Get current Date
+                DateTime today = DateTime.Today;
+                string Todaysdate = today.ToString("yymmdd");
+
+                // Add Them together Temp
+                String AFL = RootFile + ArchiveSuffix + Todaysdate + " - " + modRev;
+
+                // not neededd
+                TaskDialog.Show("Archive Model Saved in", AFL);
+
+
+                // Determine whether the directory exists.
+                if (System.IO.Directory.Exists(AFL))
+
+                
+                {
+                    TaskDialog.Show("Folder Not Created", "That Folder exists already.");
+                }
+
+                // Try to create the directory.
+                System.IO.DirectoryInfo di = System.IO.Directory.CreateDirectory(AFL);
+
+                //Get the project name from model path
+                var modelPath = doc.GetWorksharingCentralModelPath();
+                var FileName = ModelPathUtils.ConvertModelPathToUserVisiblePath(modelPath);
+                string File = FileName.Substring(FileName.Length - 29, 29);
+
+                // File Path Name
+                string FilePath = AFL + "\\" + File;
+
+                //detach cloud file
+                UIDocument uIDocument = commandData.Application.ActiveUIDocument;
+                UIApplication app = commandData.Application;
+                Document document = uIDocument.Document;
+                View currentview = document.ActiveView;
+                Guid projectid = Guid.Parse("myProjectGUID");
+                Guid modelid = Guid.Parse("myModelGUID");
+                ModelPath cloudpath = ModelPathUtils
+                  .ConvertCloudGUIDsToCloudPath(projectid, modelid);
+                OpenOptions openOptions = new OpenOptions();
+                IOpenFromCloudCallback openFromCloudCallback
+                  = new cloudinterdace();
+                app.OpenAndActivateDocument(cloudpath,
+                  openOptions, true, openFromCloudCallback);
+
+                // Save model in new location
+                SaveAsOptions sao = new SaveAsOptions();
+                doc.SaveAs(AFL, sao);
+
+                return Result.Succeeded;
+            }
+
+public class cloudinterdace : IOpenFromCloudCallback
+        {
+            public OpenConflictResult OnOpenConflict(
+              OpenConflictScenario scenario)
+            {
+                throw new NotImplementedException();
+
+
+
+                return Result.Succeeded;
+            }
+                {
+                    TaskDialog.Show("Archive Model Saved in", FilePath );
+                }
+
+                return Result.Succeeded;
+
+            }
+            catch (Exception e)
+            {
+                message = e.Message;
+                return Result.Failed;
+            }
+        }
+    }
+}
