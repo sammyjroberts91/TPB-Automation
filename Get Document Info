@@ -1,0 +1,5 @@
+            // Get UI Document
+            UIDocument uidoc = commandData.Application.ActiveUIDocument;
+            UIApplication uiapp = commandData.Application;
+            Document doc = uidoc.Document;
+            ProjectInfo projectInfo = doc.ProjectInformation;
