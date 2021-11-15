@@ -1,0 +1,3 @@
+                //Get current Date
+                DateTime today = DateTime.Today;
+                string Todaysdate = today.ToString("yymmdd");
