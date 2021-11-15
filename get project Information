@@ -1,0 +1,2 @@
+                // Model Revision
+                String modRev = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Revision").AsString();
