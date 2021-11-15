@@ -1,0 +1,2 @@
+                //Get The Root File Location
+                String RootFile = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB_RootFile").AsString();
