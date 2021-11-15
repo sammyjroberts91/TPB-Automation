@@ -1,0 +1,9 @@
+                // Determine whether the directory exists.
+                if (System.IO.Directory.Exists(AFL))
+
+                {
+                    TaskDialog.Show("Folder Not Created", "That Folder exists already.");
+                }
+
+                // Try to create the directory.
+                System.IO.DirectoryInfo di = System.IO.Directory.CreateDirectory(AFL);
