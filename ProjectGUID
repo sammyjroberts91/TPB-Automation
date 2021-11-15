@@ -1,0 +1,9 @@
+//Get project GUID
+                    UIDocument uIDocument = commandData.Application.ActiveUIDocument;
+                    UIApplication app = commandData.Application;
+                    Document document = uIDocument.Document;
+                    View currentview = document.ActiveView;
+                    Guid guid1 = cmodelPath.GetModelGUID();
+                    Guid guid2 = cmodelPath.GetProjectGUID();
+                    string sgmodel = guid1.ToString();
+                    string sgproject = guid2.ToString();
