@@ -1,0 +1,11 @@
+ // Store the ID of desired plugin button,
+  // in this case its 'purge unused'
+
+  String s_commandToDisable = "ID_PURGE_UNUSED";
+  RevitCommandId s_commandId = RevitCommandId
+    .LookupCommandId( s_commandToDisable );
+
+  // This revit button will run at the 
+  // end of your application. 
+
+  uiapp.PostCommand( s_commandId );
