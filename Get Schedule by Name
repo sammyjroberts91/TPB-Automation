@@ -1,0 +1,4 @@
+// get schedule
+            ViewSchedule carbon = new FilteredElementCollector(doc)
+                                    .OfClass(typeof(ViewSchedule))
+                                    .FirstOrDefault(e => e.Name == "Embodied Carbon Library (Do Not Delete)") as ViewSchedule;
