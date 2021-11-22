@@ -1,0 +1,145 @@
+#region Namespaces
+using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Selection;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using Microsoft.Office.Interop.Excel;
+using System.Runtime.InteropServices;
+using Excel = Microsoft.Office.Interop.Excel;
+using Microsoft.CSharp;
+using Application = Autodesk.Revit.ApplicationServices.Application;
+
+
+#endregion
+
+namespace CarbonDashboard
+{
+    [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+            // folder name
+            string folder = ("C:\\Users\\sam.roberts\\Desktop\\Carbon Assesment Test\\Coding");
+                                 
+            // Export the Carbon Schedule to Excel
+            // get schedule
+            ViewSchedule CarbonLibrary = new FilteredElementCollector(doc)
+                                    .OfClass(typeof(ViewSchedule))
+                                    .FirstOrDefault(e => e.Name == "Embodied Carbon Library (Do Not Delete)") as ViewSchedule;
+
+            //export options
+            ViewScheduleExportOptions opt = new ViewScheduleExportOptions();
+            //EXPORT
+            CarbonLibrary.Export(folder, "CarbonValues.csv", opt);
+                   
+            
+            
+            // Export the AreaSchedule to Excel
+            // get schedule
+            ViewSchedule CarbonAreas = new FilteredElementCollector(doc)
+                                    .OfClass(typeof(ViewSchedule))
+                                    .FirstOrDefault(e => e.Name == "Embodied Carbon Areas (Do Not Delete)") as ViewSchedule;
+                        
+            //EXPORT
+            CarbonAreas.Export(folder, "CarbonAreas.csv", opt);
+
+
+            // Export the Areahedule to Excel
+            // get schedule
+            ViewSchedule NoCarbonData = new FilteredElementCollector(doc)
+                                    .OfClass(typeof(ViewSchedule))
+                                    .FirstOrDefault(e => e.Name == "Embodied Carbon No Data (Do Not Delete)") as ViewSchedule;
+
+            //EXPORT
+            NoCarbonData.Export(folder, "Embodied Carbon No Data.csv", opt);
+
+            //Open File
+
+            Process.Start(@"C:\\Users\\sam.roberts\\Desktop\\Carbon Assesment Test\\Data Tables\\Carbon Dashboard v2.pbix");
+
+            // Get Project Info
+            // Model Name
+            String modname = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("Project Name").AsString();
+
+            // Project Number
+            String modNumber = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("Project Number").AsString();
+
+            // Model Revision
+            String modRev = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Revision").AsString();
+
+            // Model Status
+            String modStatus = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("Project Status").AsString();
+
+                        
+            //Write data to excel
+            //Initialize
+            Microsoft.Office.Interop.Excel.Application xlApp = new
+                                        Microsoft.Office.Interop.Excel.Application();
+
+            //Start Excel and get Application object.
+            //create a WorkSheet
+            var excelApp = new Excel.Application();
+            // Make the object visible.
+            excelApp.Visible = false;
+
+            // Create a new, empty workbook and add it to the collection returned
+            var workBook = excelApp.Workbooks.Add();
+
+            // This example uses a single workSheet. The explicit type casting is
+            // removed in a later procedure.
+            Microsoft.Office.Interop.Excel.Application xlsApp = new Microsoft.Office.Interop.Excel.Application();
+            Workbook wb = xlsApp.Workbooks.Add(XlSheetType.xlWorksheet);
+            Worksheet ws = (Worksheet)xlsApp.ActiveSheet;
+                      
+            // headings
+            ws.Cells[1, "A"] = "Project Name";
+            ws.Cells[1, "B"] = "Project Number";
+            ws.Cells[1, "C"] = "Project Rev";
+            ws.Cells[1, "D"] = "Project Status";
+
+            //Values
+            ws.Cells[2, "A"] = modname;
+            ws.Cells[2, "B"] = modNumber;
+            ws.Cells[2, "C"] = modRev;
+            ws.Cells[2, "D"] = modStatus;
+
+
+            string Directory = ("@C:\\Users\\sam.roberts\\Desktop\\Carbon Assesment Test\\Coding");
+            string namefile = "Projectinfo.xls";
+            string excelfilename = (Directory + "\\" + namefile);
+
+            // save the workbook 
+
+            System.IO.File.Delete(@"C:\Users\sam.roberts\Desktop\Carbon Assesment Test\Coding\ProjectInfo.csv");
+            wb.SaveAs(@"C:\Users\sam.roberts\Desktop\Carbon Assesment Test\Coding\ProjectInfo.csv");
+            excelApp.DisplayAlerts = false;     
+            wb.Close(true);
+            excelApp.Quit();
+                        
+            //Open File
+            Process.Start(@"C:\\Users\\sam.roberts\\Desktop\\Carbon Assesment Test\\Data Tables\\Carbon Dashboard v2.pbix");
+
+            using (Transaction tx = new Transaction(doc))
+            {
+                tx.Start("Carbon Export");
+                tx.Commit();
+            }
+
+            return Result.Succeeded;
+        }
+    }
+}
