@@ -1,0 +1,12 @@
+            // Get Project Info
+            // Model Name
+            String modname = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("Project Name").AsString();
+
+            // Project Number
+            String modNumber = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("Project Number").AsString();
+
+            // Model Revision
+            String modRev = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Revision").AsString();
+
+            // Model Status
+            String modStatus = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("Project Status").AsString();
