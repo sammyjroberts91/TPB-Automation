@@ -1,0 +1,44 @@
+  //Write data to excel
+            //Initialize
+            Microsoft.Office.Interop.Excel.Application xlApp = new
+                                        Microsoft.Office.Interop.Excel.Application();
+
+            //Start Excel and get Application object.
+            //create a WorkSheet
+            var excelApp = new Excel.Application();
+            // Make the object visible.
+            excelApp.Visible = false;
+
+            // Create a new, empty workbook and add it to the collection returned
+            var workBook = excelApp.Workbooks.Add();
+
+            // This example uses a single workSheet. The explicit type casting is
+            // removed in a later procedure.
+            Microsoft.Office.Interop.Excel.Application xlsApp = new Microsoft.Office.Interop.Excel.Application();
+            Workbook wb = xlsApp.Workbooks.Add(XlSheetType.xlWorksheet);
+            Worksheet ws = (Worksheet)xlsApp.ActiveSheet;
+
+            // headings
+            ws.Cells[1, "A"] = "Project Name";
+            ws.Cells[1, "B"] = "Project Number";
+            ws.Cells[1, "C"] = "Project Rev";
+            ws.Cells[1, "D"] = "Project Status";
+
+            //Values
+            ws.Cells[2, "A"] = modname;
+            ws.Cells[2, "B"] = modNumber;
+            ws.Cells[2, "C"] = modRev;
+            ws.Cells[2, "D"] = modStatus;
+
+
+            string Directory = ("@C:\\Users\\sam.roberts\\Desktop\\Carbon Assesment Test\\Coding");
+            string namefile = "Projectinfo.xls";
+            string excelfilename = (Directory + "\\" + namefile);
+
+            // save the workbook 
+
+            System.IO.File.Delete(@"C:\Users\sam.roberts\Desktop\Carbon Assesment Test\Coding\ProjectInfo.csv");
+            wb.SaveAs(@"C:\Users\sam.roberts\Desktop\Carbon Assesment Test\Coding\ProjectInfo.csv");
+            excelApp.DisplayAlerts = false;
+            wb.Close(true);
+            excelApp.Quit();
