@@ -1,0 +1,13 @@
+try
+
+{
+
+Document doc = commandData.Application.Application.OpenDocumentFile(@"C:\New Folder\rac_basic_sample_project.rvt");
+
+}
+
+return Autodesk.Revit.UI.Result.Succeeded;
+
+}
+
+}
