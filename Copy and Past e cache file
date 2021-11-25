@@ -1,0 +1,22 @@
+            // Project Number
+
+             string fileName = doc.WorksharingCentralGUID + ".rvt";
+             string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+             string collaborationDir = Path.Combine(localAppData, "Autodesk\\Revit\\Autodesk Revit " + doc.Application.VersionNumber, "CollaborationCache");
+             string file = Directory.GetFiles(collaborationDir, fileName, SearchOption.AllDirectories).FirstOrDefault(x => new FileInfo(x).Directory?.Name != "CentralCache");
+
+
+                
+             string destinationPath = @"C:\Users\sam.roberts\Desktop\Archive Test";
+             string destinationFileName = "test.rvt";
+             string sourceFile = System.IO.Path.Combine(file);
+             string destinationFile = System.IO.Path.Combine(destinationPath, destinationFileName);
+
+                if (!System.IO.Directory.Exists(destinationPath))
+                {
+                    System.IO.Directory.CreateDirectory(destinationPath);
+                }
+                System.IO.File.Copy(sourceFile, destinationFile, true);
+                
+
+
