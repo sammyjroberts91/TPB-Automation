@@ -1,0 +1,39 @@
+#region Namespaces
+using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Selection;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+
+#endregion
+
+namespace ArchiveCloudModel
+{
+    [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+
+                if (doc.PathName.StartsWith("BIM 360://"))
+                {
+                    string fileName = doc.WorksharingCentralGUID + ".rvt";
+                    string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                    string collaborationDir = Path.Combine(localAppData, "Autodesk\\Revit\\Autodesk Revit " + doc.Application.VersionNumber, "CollaborationCache");
+                    string file = Directory.GetFiles(collaborationDir, fileName, SearchOption.AllDirectories).FirstOrDefault(x => new FileInfo(x).Directory?.Name != "CentralCache");
+
+                }
+ 
