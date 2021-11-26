@@ -1,0 +1,3 @@
+                //delete sheets
+                List<ElementId> sheetids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_Sheets).ToElementIds().ToList();
+                    openedDoc.Delete(sheetids);
