@@ -1,0 +1,3 @@
+List<ElementId> sheetids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_Sheets).ToElementIds().ToList();
+             sheetids.RemoveAt(0);
+             openedDoc.Delete((ICollection<ElementId>)sheetids);
