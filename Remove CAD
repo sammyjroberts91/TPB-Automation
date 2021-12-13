@@ -1,0 +1,14 @@
+            //Remove CAD Links
+                IList<ElementId> categoryIds = new List<ElementId>();
+
+                foreach (ImportInstance ii in new FilteredElementCollector(doc)
+                    .OfClass(typeof(ImportInstance))
+                    .Cast<ImportInstance>()
+                    .Where(i => i.IsLinked == true))
+                {
+                    ElementId catId = ii.Category.Id;
+                    if (!categoryIds.Contains(catId))
+                        categoryIds.Add(catId);
+                }
+
+                doc.Delete(categoryIds);
