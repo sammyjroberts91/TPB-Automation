@@ -1,0 +1,125 @@
+#region Namespaces
+using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Selection;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+
+#endregion
+
+namespace ShareCloudModel
+{
+    [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+
+            string fileName = doc.WorksharingCentralGUID + ".rvt";
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string collaborationDir = Path.Combine(localAppData, "Autodesk\\Revit\\Autodesk Revit " + doc.Application.VersionNumber, "CollaborationCache");
+            string file = Directory.GetFiles(collaborationDir, fileName, SearchOption.AllDirectories).FirstOrDefault(x => new FileInfo(x).Directory?.Name != "CentralCache");
+
+
+            ModelPath mp = ModelPathUtils.ConvertUserVisiblePathToModelPath(file);
+
+            string destinationPath = @"C:\Users\sam.roberts\Desktop\Archive Test";
+            string destinationFileName = "test.rvt";
+            string sourceFile = System.IO.Path.Combine(file);
+            string destinationFile = System.IO.Path.Combine(destinationPath, destinationFileName);
+
+            OpenOptions opt = new OpenOptions();
+            opt.DetachFromCentralOption = DetachFromCentralOption.DetachAndDiscardWorksets;
+            Document openedDoc = app.OpenDocumentFile(mp, opt);
+
+                        // opened doc break for share file
+
+            SaveAsOptions options = new SaveAsOptions();
+            options.OverwriteExistingFile = true;
+            ModelPath modelPathout = ModelPathUtils.ConvertUserVisiblePathToModelPath(destinationPath + "\\" + destinationFileName);
+
+
+            openedDoc.SaveAs(modelPathout, options);
+
+            // your code
+
+
+            //delete
+            //delete sheets
+
+            //IEnumerable<Element> viewse = new FilteredElementCollector(doc)
+            //.OfCategory(BuiltInCategory.OST_Views)
+            //.ToElements();          
+            //ICollection<Autodesk.Revit.DB.ElementId> deletedIdSet = openedDoc.Delete((ICollection<ElementId>)viewse);
+            
+            //start deleting Transcation
+            using (Transaction tx = new Transaction(openedDoc))
+            {
+                tx.Start("Transaction Name");
+
+            //delete sheets - excluding BM0001
+                List<ElementId> sheetids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_Sheets).ToElementIds().ToList();
+                sheetids.RemoveAt(0);
+                openedDoc.Delete((ICollection<ElementId>)sheetids);
+            //Delete Views
+                List<ElementId> viewids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_Views).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)viewids);
+            //Delete Schedules
+                List<ElementId> scheduleids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_Schedules).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)scheduleids);
+            //Delete Legends
+                List<ElementId> Legendids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_LegendComponents).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)Legendids);
+            //Delete Filters
+                List<ElementId> filterids = new FilteredElementCollector(openedDoc).OfClass(typeof(FilterElement)).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)filterids);
+            //Remove Revit Links
+                List<ElementId> rvtlinksids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_RvtLinks).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)rvtlinksids);
+            //Remove CAD Links
+                IList<ElementId> categoryIds = new List<ElementId>();
+
+                foreach (ImportInstance ii in new FilteredElementCollector(doc)
+                    .OfClass(typeof(ImportInstance))
+                    .Cast<ImportInstance>()
+                    .Where(i => i.IsLinked == true))
+                {
+                    ElementId catId = ii.Category.Id;
+                    if (!categoryIds.Contains(catId))
+                        categoryIds.Add(catId);
+                }
+
+                doc.Delete(categoryIds);
+
+
+                // Purge
+
+
+
+
+
+
+               
+                tx.Commit();
+            }
+
+                openedDoc.SaveAs(modelPathout, options);
+
+
+            return Result.Succeeded;
+        }
+    }
+}
