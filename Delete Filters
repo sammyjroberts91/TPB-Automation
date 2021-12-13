@@ -1,0 +1,3 @@
+            //Delete Filters
+                List<ElementId> filterids = new FilteredElementCollector(openedDoc).OfClass(typeof(FilterElement)).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)filterids);
