@@ -1,0 +1,280 @@
+#region Namespaces
+using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Selection;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+
+
+#endregion
+
+namespace ShareCloudModel
+{
+    [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+
+            string fileName = doc.WorksharingCentralGUID + ".rvt";
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string collaborationDir = Path.Combine(localAppData, "Autodesk\\Revit\\Autodesk Revit " + doc.Application.VersionNumber, "CollaborationCache");
+            string file = Directory.GetFiles(collaborationDir, fileName, SearchOption.AllDirectories).FirstOrDefault(x => new FileInfo(x).Directory?.Name != "CentralCache");
+
+
+            ModelPath mp = ModelPathUtils.ConvertUserVisiblePathToModelPath(file);
+
+            // Model Revision
+            string rootfile= commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_RootFile").AsString();
+            //shared suffix
+            string Shared = "\\BIM\\Shared\\RVT\\";
+            // Model Revision
+            String modRev = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Revision").AsString();
+            //Get current Date
+            DateTime today = DateTime.Today;
+            string Todaysdate = today.ToString("yymmdd");
+
+            //shared folder directory
+            string SFL = rootfile + Shared + Todaysdate + "-" + modRev;
+
+            // Try to create the directory.
+
+            try
+            {
+                // Determine whether the directory exists.
+                if (Directory.Exists(SFL))
+                {
+                    Console.WriteLine("That path exists already.");
+                }
+
+                // Try to create the directory.
+                DirectoryInfo di = Directory.CreateDirectory(SFL);
+                Console.WriteLine("The directory was created successfully at {0}.", Directory.GetCreationTime(SFL));
+
+                // Delete the directory.
+                di.Delete();
+                Console.WriteLine("The directory was deleted successfully.");
+
+            }
+
+            finally { }
+
+            //paths
+            string destinationPath = @"C:\Users\sam.roberts\Desktop\Archive Test";
+            string destinationFileName = "test.rvt";
+            string sourceFile = System.IO.Path.Combine(file);
+            string destinationFile = System.IO.Path.Combine(destinationPath, destinationFileName);
+            
+            //Get the project name from model path
+            var modelPath = doc.GetWorksharingCentralModelPath();
+            var FileName = ModelPathUtils.ConvertModelPathToUserVisiblePath(modelPath);
+            string File = FileName.Substring(FileName.Length - 29, 29);
+
+            // File Path Name
+            string FilePath = SFL + "\\" + File;
+
+            OpenOptions opt = new OpenOptions();
+            opt.DetachFromCentralOption = DetachFromCentralOption.DetachAndDiscardWorksets;
+            Document openedDoc = app.OpenDocumentFile(mp, opt);
+
+            // opened doc break for share file
+            SaveAsOptions options = new SaveAsOptions();
+            options.OverwriteExistingFile = true;
+            ModelPath modelPathout = ModelPathUtils.ConvertUserVisiblePathToModelPath(FilePath);
+
+
+            openedDoc.SaveAs(modelPathout, options);
+
+            // your code
+
+            //start deleting Transcation
+            using (Transaction tx = new Transaction(openedDoc))
+            {
+                tx.Start("Transaction Name");
+
+                //delete sheets - excluding BM0001
+                List<ElementId> sheetids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_Sheets).ToElementIds().ToList();
+                sheetids.RemoveAt(0);
+                openedDoc.Delete((ICollection<ElementId>)sheetids);
+                //Delete Views
+                List<ElementId> viewids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_Views).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)viewids);
+                //Delete Schedules
+                List<ElementId> scheduleids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_Schedules).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)scheduleids);
+                //Delete Legends
+                List<ElementId> Legendids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_LegendComponents).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)Legendids);
+                //Delete Filters
+                List<ElementId> filterids = new FilteredElementCollector(openedDoc).OfClass(typeof(FilterElement)).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)filterids);
+                //Remove Revit Links
+                List<ElementId> rvtlinksids = new FilteredElementCollector(openedDoc).OfCategory(BuiltInCategory.OST_RvtLinks).ToElementIds().ToList();
+                openedDoc.Delete((ICollection<ElementId>)rvtlinksids);
+                //Remove CAD Links
+                IList<ElementId> categoryIds = new List<ElementId>();
+
+                foreach (ImportInstance ii in new FilteredElementCollector(doc)
+                    .OfClass(typeof(ImportInstance))
+                    .Cast<ImportInstance>()
+                    .Where(i => i.IsLinked == true))
+                {
+                    ElementId catId = ii.Category.Id;
+                    if (!categoryIds.Contains(catId))
+                        categoryIds.Add(catId);
+                }
+
+                openedDoc.Delete(categoryIds);
+
+
+                tx.Commit();
+
+                // Purge Materials
+
+
+
+                //Purge (delete unplaced types and families from project)
+
+                // List of categories whose families will be purged
+                List<int> categoriesToPurge = new List<int>();
+                categoriesToPurge.Add((int)BuiltInCategory.OST_StructuralFraming);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Walls);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Furniture);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_FurnitureSystems);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Casework);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Doors);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Walls);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_GenericAnnotation);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Ceilings);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_CurtainGrids);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_CurtainGridsWall);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_CurtainWallMullions);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_CurtainWallPanels);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_DetailComponents);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Floors);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Views);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_ElectricalFixtures);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_ElectricalEquipment);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_GenericModel);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_LightingFixtures);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Planting);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_PlumbingFixtures);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_ProfileFamilies);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Railings);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_SpecialityEquipment);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Tags);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_TextNotes);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_DSR_ArrowHeadStyleId);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Entourage);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Railings);
+                categoriesToPurge.Add((int)BuiltInCategory.OST_Stairs);
+
+                List<ElementId> typesToDelete = new List<ElementId>();
+
+                // Check all element types whose category is contained in the category list	
+                foreach (ElementType et in new FilteredElementCollector(openedDoc)
+                         .OfClass(typeof(ElementType))
+                         .Cast<ElementType>()
+                         .Where(q => q.Category != null &&
+                                categoriesToPurge.Contains(q.Category.Id.IntegerValue)))
+                {
+                    // if there are no elements with this type, add it to the list for deletion
+                    if (new FilteredElementCollector(openedDoc)
+                        .WhereElementIsNotElementType()
+                        .Where(q => q.GetTypeId() == et.Id).Count() == 0)
+                    {
+                        typesToDelete.Add(et.Id);
+                    }
+                }
+
+                using (TransactionGroup tg = new TransactionGroup(openedDoc, "Purge families"))
+                {
+                    tg.Start();
+                    foreach (ElementId id in typesToDelete)
+                    {
+                        using (Transaction t = new Transaction(openedDoc, "delete type"))
+                        {
+                            // Do not delete type if it would result in error such as
+                            // "Last type in system family "Stacked Wall" cannot be deleted."
+                            FailureHandlingOptions failOpt = t.GetFailureHandlingOptions();
+                            failOpt.SetClearAfterRollback(true);
+                            failOpt.SetFailuresPreprocessor(new RollbackIfErrorOccurs());
+                            t.SetFailureHandlingOptions(failOpt);
+
+                            t.Start();
+                            try
+                            {
+                                openedDoc.Delete(id);
+                            }
+                            catch
+                            { }
+                            t.Commit();
+                        }
+                    }
+
+                    // Delete families that now have no types
+                    IList<ElementId> familiesToDelete = new List<ElementId>();
+                    foreach (Family family in new FilteredElementCollector(openedDoc)
+                        .OfClass(typeof(Family))
+                        .Cast<Family>()
+                        .Where(q => categoriesToPurge.Contains(q.FamilyCategory.Id.IntegerValue)))
+                    {
+                        // add family to list if there are no instances of any type of this family
+                        if (new FilteredElementCollector(openedDoc)
+                            .OfClass(typeof(FamilyInstance))
+                            .Cast<FamilyInstance>()
+                            .Where(q => q.Symbol.Family.Id == family.Id)
+                            .Count() == 0)
+                        {
+                            familiesToDelete.Add(family.Id);
+                        }
+                    }
+
+                    using (Transaction t = new Transaction(openedDoc, "delete families with no types"))
+                    {
+                        t.Start();
+                        openedDoc.Delete(familiesToDelete);
+                        t.Commit();
+                    }
+
+                    tg.Assimilate();
+                }
+
+                return Result.Succeeded;
+             }
+        }
+
+        public class RollbackIfErrorOccurs : IFailuresPreprocessor
+        {
+            public FailureProcessingResult PreprocessFailures(FailuresAccessor failuresAccessor)
+            {
+                // if there are any failures, rollback the transaction
+                if (failuresAccessor.GetFailureMessages().Count > 0)
+                {
+                    return FailureProcessingResult.ProceedWithRollBack;
+                }
+                else
+                {
+                    return FailureProcessingResult.Continue;
+                }
+            }
+        }
+    } 
+ }
+
+
+
+
