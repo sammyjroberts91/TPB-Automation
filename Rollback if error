@@ -1,0 +1,17 @@
+        public class RollbackIfErrorOccurs : IFailuresPreprocessor
+        {
+            public FailureProcessingResult PreprocessFailures(FailuresAccessor failuresAccessor)
+            {
+                // if there are any failures, rollback the transaction
+                if (failuresAccessor.GetFailureMessages().Count > 0)
+                {
+                    return FailureProcessingResult.ProceedWithRollBack;
+                }
+                else
+                {
+                    return FailureProcessingResult.Continue;
+                }
+            }
+        }
+    } 
+ }
