@@ -1,0 +1,38 @@
+if (modifedElem.Category.Id.IntegerValue == (int)BuiltInCategory.OST_Sheets)
+                {
+                    foreach (var ids in modifiedIds)
+                    {
+                         
+                        ViewSheet modifiedViewSheet = (ViewSheet)modifedElem;
+                        
+                        List<View> viewToSet = new List<View>();
+
+                        ICollection<ElementId> listViews = modifiedViewSheet.GetAllViewports();
+                        
+                        foreach (ElementId Elmids in listViews)
+                        {
+                            Element elementViewports = doc.GetElement(Elmids);
+
+                            Viewport viewport = elementViewports as Viewport;
+                            ElementId viewId = viewport.ViewId;
+                            Element elementView = doc.GetElement(viewId);
+                            View v = elementView as View;
+
+                            //skip legends
+                            
+                            var viewType = v.ViewType.ToString();
+                            var titleOnSheetParam = v.LookupParameter("Title on Sheet");
+                            if (viewType == "Legend")
+                            {
+                                continue;
+                            }
+
+                            //Set every view in sheet to new sheet number
+                            viewToSet.Add(v);
+                        }
+                        foreach (View v in viewToSet)
+                        {
+                            setRename.SetViewNameOnSheet(v, modifiedViewSheet);
+                        }
+                    }
+                }
