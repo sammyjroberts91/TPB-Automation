@@ -1,0 +1,36 @@
+    BoundingBoxXYZ bounding 
+      = elem.get_BoundingBox( doc.ActiveView );
+ 
+    string sMsg = "The Max and Min points are: \n";
+ 
+    sMsg += bounding.Max.X.ToString() 
+      + ", " + bounding.Max.Y.ToString() 
+      + ", " + bounding.Max.Z.ToString() + "\n";
+ 
+    sMsg += bounding.Min.X.ToString() 
+      + ", " + bounding.Min.Y.ToString() 
+      + ", " + bounding.Min.Z.ToString() + "\n";
+ 
+    XYZ xyzPosition 
+    
+    
+      BoundingBoxXYZ xyzLocation 
+    = SelectedView.get_BoundingBox( 
+      m_Doc.ActiveView );
+ 
+  // get the outline max and min 
+ 
+  XYZ ptMaxOutline = new XYZ( 
+    CorrespondingView.Outline.Max.U, 
+    CorrespondingView.Outline.Max.V, 
+    0 );
+ 
+  // get the view's origin point's 
+  // coordinates in current view sheet. 
+ 
+  UV ptSourceViewOriginInSheet = new UV( 
+    xyzLocation.Max.X - ptMaxOutline.X,
+    xyzLocation.Max.Y - ptMaxOutline.Y ); 
+    
+    
+    
