@@ -1,0 +1,118 @@
+#region Namespaces
+using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Selection;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+
+#endregion
+
+namespace BrickDimAll
+{
+    [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+            using (Transaction tx = new Transaction(doc))
+            {
+                tx.Start("Transaction Name");
+
+                List<Dimension> dims = new FilteredElementCollector(doc, doc.ActiveView.Id).OfCategory(BuiltInCategory.OST_Dimensions)
+                                       .Cast<Dimension>().Where(q => q.DimensionShape == DimensionShape.Linear).ToList();
+
+                foreach (Dimension di in dims)
+
+                    foreach (DimensionSegment dimSeg in di.Segments)
+                    {
+
+                        //get dimension value in mm
+                        double dimValue = Convert.ToDouble(dimSeg.ValueString);
+
+
+                        if (dimValue % 205 == 0)
+                        {
+                            //if value == 10, add item to cut brick list
+                            dimSeg.Below = "B" + (dimValue / 205);
+
+                        }
+
+
+                        if (dimValue % 102.5 == 0)
+                        {
+                            //if value == 10, add item to cut brick list
+                            dimSeg.Below = "B" + (dimValue / 205);
+
+                        }
+                    }
+
+                tx.Commit();
+            }
+
+
+using (Transaction t2 = new Transaction(doc))
+            {
+                t2.Start("Transaction Name");
+
+                List<Dimension> dims = new FilteredElementCollector(doc, doc.ActiveView.Id).OfCategory(BuiltInCategory.OST_Dimensions)
+                        .Cast<Dimension>().Where(q => q.DimensionShape == DimensionShape.Linear).ToList();
+
+
+                foreach (Dimension di in dims)
+
+
+                  {
+
+                        //get dimension value in mm
+                        double dimValue = Convert.ToDouble(di.ValueString);
+
+
+                        if (dimValue % 205 == 0)
+
+                        try
+
+                        {
+                            //if value == 10, add item to cut brick list
+                            di.Below = "B" + (dimValue / 205);
+
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
+
+
+                        if (dimValue % 102.5 == 0)
+
+                        try
+
+
+                        {
+                            //if value == 10, add item to cut brick list
+                            di.Below = "B" + (dimValue / 205);
+
+                    }
+                            catch (Exception ex)
+                    {
+
+                    }
+                    }
+                t2.Commit();
+
+            }
+            return Result.Succeeded;
+        }
+    }
+}
