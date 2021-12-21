@@ -1,0 +1,116 @@
+#region Namespaces
+using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Selection;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
+#endregion
+
+namespace DoorOffset
+{
+    [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(          
+         ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+            // establish an offset of 20cm that will be applied to the door and wall
+            // Revit's internal units for distance is feet
+
+            //set up form and ask for offset size
+
+            Form1 form = new Form1(commandData);
+            form.ShowDialog();            
+
+            
+            string doortest = form.textBox1.Text;
+            double DO = Convert.ToDouble(doortest);
+
+            // get offset value
+
+
+            double doormm = DO / 10;
+            double doorToWallDistance = doormm / (12 * 2.54);
+
+
+           //ouble doorToWallDistance = 20 / (12 * 2.54); // convert 20 cm to 1 ft
+
+            try // try/catch block with PickObject is used to give the user a way to get out of the infinite loop of while (true)
+                // PickObject throws an exception when user aborts from selection
+            {
+                while (true)
+                {
+                    FamilyInstance door = doc.GetElement(uidoc.Selection.PickObject(ObjectType.Element, "Select a door. ESC when finished.").ElementId) as FamilyInstance;
+                    double doorWidth = door.Symbol.get_Parameter(BuiltInParameter.DOOR_WIDTH).AsDouble();
+
+                    Wall sideWall = doc.GetElement(uidoc.Selection.PickObject(ObjectType.Element, "Select a wall. ESC when finished.").ElementId) as Wall;
+                    double sideWallWidth = sideWall.Width;
+
+                    // get the curve that defines the centerline of the side wall
+                    LocationCurve sideWallLocationCurve = sideWall.Location as LocationCurve;
+                    Curve sideWallCurve = sideWallLocationCurve.Curve;
+
+                    // get the curve that defines the centerline of the wall that hosts the door
+                    Wall hostWall = door.Host as Wall;
+                    LocationCurve hostWallLocationCurve = hostWall.Location as LocationCurve;
+                    Curve hostWallCurve = hostWallLocationCurve.Curve;
+
+                    // find the point of intersection of these two wall curves (intersectionXYZ)
+                    // and the position of this point on the wall that hosts the door (intersectionParam)
+                    IntersectionResultArray ira = new IntersectionResultArray();
+                    SetComparisonResult scr = sideWallCurve.Intersect(hostWallCurve, out ira);
+                    var iter = ira.GetEnumerator();
+                    iter.MoveNext();
+                    IntersectionResult ir = iter.Current as IntersectionResult;
+                    XYZ intersectionXYZ = ir.XYZPoint;
+                    double intersectionParam = hostWallCurve.Project(intersectionXYZ).Parameter;
+
+                    // find the position of the door in its host wall
+                    LocationPoint doorPoint = door.Location as LocationPoint;
+                    XYZ doorXYZ = doorPoint.Point;
+                    double doorParam = hostWallCurve.Project(doorXYZ).Parameter;
+
+                    // compute the translation vector between the edge of the door closest to the wall and the side face of the wall
+                    XYZ translation = null;
+                    XYZ doorEdgeXYZ = null;
+                    XYZ intersectionOffsetXYZ = null;
+                    if (intersectionParam > doorParam)
+                    {
+                        intersectionOffsetXYZ = hostWallCurve.Evaluate(intersectionParam - doorToWallDistance - sideWallWidth / 2, false);
+                        doorEdgeXYZ = hostWallCurve.Evaluate(doorParam + doorWidth / 2, false);
+                        translation = intersectionOffsetXYZ.Subtract(doorEdgeXYZ);
+                    }
+                    else
+                    {
+                        intersectionOffsetXYZ = hostWallCurve.Evaluate(intersectionParam + doorToWallDistance + sideWallWidth / 2, false);
+                        doorEdgeXYZ = hostWallCurve.Evaluate(doorParam - doorWidth / 2, false);
+                        translation = doorEdgeXYZ.Subtract(intersectionOffsetXYZ).Negate();
+                    }
+
+                    // Move the door
+                    using (Transaction t = new Transaction(doc, "move door"))
+                    {
+                        t.Start();
+                        ElementTransformUtils.MoveElement(doc, door.Id, translation);
+                        t.Commit();
+                    }
+                }
+            }
+            catch { }
+            return Autodesk.Revit.UI.Result.Succeeded;
+        }
+    }
+}
+
+      
