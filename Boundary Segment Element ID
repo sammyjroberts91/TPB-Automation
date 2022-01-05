@@ -1,0 +1,24 @@
+ //all rooms
+
+                 List<Element> Rooms = new FilteredElementCollector(doc).OfClass(typeof(SpatialElement)).WhereElementIsNotElementType().Where(room => room.GetType() == typeof(Room)).ToList();
+                FilteredElementCollector rooms = new FilteredElementCollector(doc);
+                rooms.OfCategory(BuiltInCategory.OST_Rooms);
+
+                SpatialElementBoundaryOptions options = new SpatialElementBoundaryOptions();
+                options.SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Finish;
+
+                foreach (Room room in rooms)
+                {
+                    IList<IList<BoundarySegment>> loops
+                      = room.GetBoundarySegments(
+                        new SpatialElementBoundaryOptions());
+
+                    foreach (IList<BoundarySegment> loop in loops)
+                    {
+
+
+                        foreach (BoundarySegment seg in loop)
+                        {
+
+                            ElementId e = seg.ElementId;
+                            var type = doc.GetElement(e) as ElementType;
