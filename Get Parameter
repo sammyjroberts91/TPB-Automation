@@ -1,0 +1,1 @@
+var aph = e.get_Parameter(BuiltInParameter.FAMILY_HOSTING_BEHAVIOR);
