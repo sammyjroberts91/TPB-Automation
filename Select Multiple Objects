@@ -1,0 +1,2 @@
+IList<Reference> pickedobjs = uidoc.Selection.PickObjects(ObjectType.Element, "Select Elements to be Hosted");
+            List<ElementId> ids = (from Reference r in pickedobjs select r.ElementId).ToList();
