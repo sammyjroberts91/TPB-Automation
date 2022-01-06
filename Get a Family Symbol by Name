@@ -1,0 +1,2 @@
+//Get Line detail
+                            FamilySymbol famSym = new FilteredElementCollector(doc).OfClass(typeof(Family)).OfType<Family>().FirstOrDefault(f => f.Name.Equals("TPB_Detail_Line_Wall_Type"))?.GetFamilySymbolIds().Select(ElementId => doc.GetElement(ElementId)).OfType<FamilySymbol>().FirstOrDefault(symbol => symbol.Name.Equals("TPB_WallFinish_WF02"));
