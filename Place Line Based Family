@@ -1,0 +1,2 @@
+ //Draw Lines
+doc.Create.NewFamilyInstance(segline, famSym, doc.ActiveView);
