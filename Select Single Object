@@ -1,0 +1,2 @@
+ElementId newhost = uidoc.Selection.PickObject(ObjectType.Element, "Select element or ESC to reset the view").ElementId;
+
