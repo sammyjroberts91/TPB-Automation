@@ -1,0 +1,3 @@
+List<Element> Rooms = new FilteredElementCollector(doc).OfClass(typeof(SpatialElement)).WhereElementIsNotElementType().Where(room => room.GetType() == typeof(Room)).ToList();
+            FilteredElementCollector rooms = new FilteredElementCollector(doc);
+            rooms.OfCategory(BuiltInCategory.OST_Rooms);
