@@ -1,0 +1,39 @@
+            List<Element> Rooms = new FilteredElementCollector(doc).OfClass(typeof(SpatialElement)).WhereElementIsNotElementType().Where(room => room.GetType() == typeof(Room)).ToList();
+            FilteredElementCollector rooms = new FilteredElementCollector(doc);
+            rooms.OfCategory(BuiltInCategory.OST_Rooms);
+
+            SpatialElementBoundaryOptions options = new SpatialElementBoundaryOptions();
+            options.SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Finish;
+
+            foreach (Room room in rooms)
+            {
+                IList<IList<BoundarySegment>> loops
+                  = room.GetBoundarySegments(
+                    new SpatialElementBoundaryOptions());
+
+                foreach (IList<BoundarySegment> loop in loops)
+                    {
+
+
+                    foreach (BoundarySegment seg in loop)
+                    {
+
+                        ElementId e = seg.ElementId;
+
+
+                        //start point 
+                        Double SX = seg.GetCurve().GetEndPoint(0).X;
+                        Double SY = seg.GetCurve().GetEndPoint(0).Y;
+                        Double SZ = seg.GetCurve().GetEndPoint(0).Z;
+
+
+                        //End piont
+                        Double EX = seg.GetCurve().GetEndPoint(1).X;
+                        Double EY = seg.GetCurve().GetEndPoint(1).Y;
+                        Double EZ = seg.GetCurve().GetEndPoint(1).Z;
+
+                        // draw line
+                        XYZ start = new XYZ(SX, SY, SZ);
+                        XYZ End = new XYZ(EX, EY, EZ);
+                        XYZ Mid = 0.5 * (start + End);
+                        Line segline = Line.CreateBound(start, End);
