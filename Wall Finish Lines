@@ -1,0 +1,98 @@
+#region Namespaces
+using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Architecture;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Selection;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Collections.Generic;
+
+#endregion
+
+namespace WallFinishes
+{
+    [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+
+            List<Element> Rooms = new FilteredElementCollector(doc).OfClass(typeof(SpatialElement)).WhereElementIsNotElementType().Where(room => room.GetType() == typeof(Room)).ToList();
+            FilteredElementCollector rooms = new FilteredElementCollector(doc);
+            rooms.OfCategory(BuiltInCategory.OST_Rooms);
+
+            SpatialElementBoundaryOptions options = new SpatialElementBoundaryOptions();
+            options.SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Finish;
+
+            foreach (Room room in rooms)
+            {
+                IList<IList<BoundarySegment>> loops
+                  = room.GetBoundarySegments(
+                    new SpatialElementBoundaryOptions());
+
+                foreach (IList<BoundarySegment> loop in loops)
+                    {
+
+
+                    foreach (BoundarySegment seg in loop)
+                    {
+
+                        ElementId e = seg.ElementId;
+
+
+                        //start point 
+                        Double SX = seg.GetCurve().GetEndPoint(0).X;
+                        Double SY = seg.GetCurve().GetEndPoint(0).Y;
+                        Double SZ = seg.GetCurve().GetEndPoint(0).Z;
+
+
+                        //End piont
+                        Double EX = seg.GetCurve().GetEndPoint(1).X;
+                        Double EY = seg.GetCurve().GetEndPoint(1).Y;
+                        Double EZ = seg.GetCurve().GetEndPoint(1).Z;
+
+                        // draw line
+                        XYZ start = new XYZ(SX, SY, SZ);
+                        XYZ End = new XYZ(EX, EY, EZ);
+                        XYZ Mid = 0.5 * (start + End);
+                        Line segline = Line.CreateBound(start, End);
+
+
+                        using (Transaction t = new Transaction(doc, "Place Detail Line"))
+                        {
+                            t.Start();
+
+                            //Get Line detail
+                            FamilySymbol famSym = new FilteredElementCollector(doc).OfClass(typeof(Family)).OfType<Family>().FirstOrDefault(f => f.Name.Equals("TPB_Detail_Line_Wall_Type"))?.GetFamilySymbolIds().Select(ElementId => doc.GetElement(ElementId)).OfType<FamilySymbol>().FirstOrDefault(symbol => symbol.Name.Equals("TPB_WallFinish_WF02"));
+    
+                            //Draw Lines
+                             doc.Create.NewFamilyInstance(segline, famSym, doc.ActiveView);
+                    
+                            t.Commit();
+
+                            }
+
+                        }
+
+                    }
+                }
+            return Result.Succeeded;
+            }
+       }
+                
+    }
+
+
+
