@@ -1,0 +1,36 @@
+                        //Start array for floor and Create Floor
+                        CurveArray flrCurves = new CurveArray();
+                        flrSt = new XYZ(startPoint.X + massWidthDbl, startPoint.Y, startPoint.Z);
+                        flr02Pt = startPoint;
+                        flr03Pt = new XYZ(startPoint.X, startPoint.Y - massLengthDbl, startPoint.Z);
+                        flr04Pt = new XYZ(startPoint.X + massWidthDbl, startPoint.Y - massLengthDbl, startPoint.Z);
+                        flrCurves.Append(Line.CreateBound(flrSt, flr02Pt));
+                        flrCurves.Append(Line.CreateBound(flr02Pt, flr03Pt));
+                        flrCurves.Append(Line.CreateBound(flr03Pt, flr04Pt));
+                        flrCurves.Append(Line.CreateBound(flr04Pt, flrSt));
+
+                        floorType = GetFloorType(doc, "FIN_Wood 3/4\" (6\" Plank)", out flrThk);
+
+                        finishedFloor = doc.Create.NewFloor(flrCurves, floorType, modLevel, false, XYZ.BasisZ);
+
+                        finishedFloor.get_Parameter(BuiltInParameter.FLOOR_HEIGHTABOVELEVEL_PARAM).Set(0);
+
+                        //Need to get the instance so instance parameters can be fetched
+                        finFlrElement = doc.GetElement(finishedFloor.Id);
+                        finFlrInst = finFlrElement as Floor;
+
+                        //Attach Module Guid to Floor
+                        modGuid = finFlrInst.get_Parameter(ModuleGuid);
+
+                        if (modGuid == null)
+                        {
+                            MessageBox.Show(paramEx.Message, "Revit Preparation Incomplete!");
+                            throw paramEx;
+                        }
+
+                        modGuid.Set(guid.ToString());
+
+                        //Add Floor to Group
+                        grpIDList.Add(finishedFloor.Id);
+                            
+                        #endregion
