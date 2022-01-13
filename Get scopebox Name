@@ -1,0 +1,15 @@
+Parameter P = Doc.ActiveView.get_Parameter(BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP);
+			if (P == null)
+			{
+				TaskDialog.Show("Scope box", "N/A");
+				return Result.Succeeded;
+			}
+			else
+			{
+				Element El = Doc.GetElement(P.AsElementId());
+				string ScopeBoxName = El.Name;
+				TaskDialog.Show("Scope box", ScopeBoxName);
+			}
+
+			return Result.Succeeded;
+		}
