@@ -1,0 +1,5 @@
+//Get The Root File Location
+            String RootFile = "\\" + "\\srvradium\\CADCentral\\BIM\\Guidance";
+
+            // opens the folder in explorer
+            Process.Start("explorer.exe", RootFile);
