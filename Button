@@ -1,0 +1,59 @@
+ class App : IExternalApplication
+    {
+            const string RIBBON_TAB = "Sam Tools";
+            const string RIBBON_PANEL = "Folders";
+
+            public Result OnStartup(UIControlledApplication a)
+            {
+
+                // get the ribbon tab
+                try
+                {
+                    a.CreateRibbonTab(RIBBON_TAB);
+                }
+                catch (Exception) { } //tab already exists  
+
+
+                //Create Panel       
+                RibbonPanel panel = null;
+                List<RibbonPanel> panels = a.GetRibbonPanels(RIBBON_TAB);
+                foreach (RibbonPanel pnl in panels)
+                {
+                    if (pnl.Name == RIBBON_PANEL)
+                    {
+                        panel = pnl;
+                        break;
+                    }
+                }
+
+                // cant find panel create it
+
+                if (panel == null)
+
+                {
+                    panel = a.CreateRibbonPanel(RIBBON_TAB, RIBBON_PANEL);
+                }
+
+                ;
+
+                //Get the push button data
+                PushButtonData btndata = new PushButtonData("Project Folder", "Project Folder", Assembly.GetExecutingAssembly().Location, "ProjectFolder.Command");
+
+                // Add the button
+                PushButton button = panel.AddItem(btndata) as PushButton;
+
+                button.ToolTip = "Open the Project Folder";
+                button.LongDescription = "Add wall finish lines everywhere there is an Wall creating a room boundary";
+                BitmapImage newbit = new BitmapImage(new Uri("pack://application:,,,/ProjectFolder;component/Resources/pficon.png"));
+                button.LargeImage = newbit;
+
+
+                return Result.Succeeded;
+            }
+
+            public Result OnShutdown(UIControlledApplication a)
+            {
+                return Result.Succeeded;
+            }
+        }
+    }
