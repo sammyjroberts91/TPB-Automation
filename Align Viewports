@@ -1,0 +1,81 @@
+ [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+            //Get Selected Scope box Name
+            Reference reference = uidoc.Selection.PickObject(ObjectType.Element, "Select Parent Viewport, all views with same Scopebox will be aligned");
+            Viewport element = (Viewport)uidoc.Document.GetElement(reference);
+
+            //GET VIEWPORT LOCATION
+            BoundingBoxXYZ bounding = element.get_BoundingBox(doc.ActiveView);
+            XYZ refcentre = 0.5 * (bounding.Max + bounding.Min);
+
+            //GETSCOPEBOX
+            Parameter P = element.get_Parameter(BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP);
+            Element El = doc.GetElement(P.AsElementId());
+            string ScopeBoxName = El.Name;
+            ElementId sheetdi1 = element.SheetId;
+            var titleBlockId1 = new FilteredElementCollector(doc, sheetdi1).OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
+            Element tbf1 = doc.GetElement(titleBlockId1);
+
+            //GET SCOPEBOX TYPE ID
+            Element elemType1 = doc.GetElement(tbf1.GetTypeId());
+
+            // Calculate the necessary move vector to align the lower left corner
+            Outline outline = element.GetBoxOutline();
+            XYZ boxCenter = element.GetBoxCenter();
+
+
+            //GET ALL VIEWPORTS
+            FilteredElementCollector docCollector = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Viewports);
+            foreach (Viewport vp in docCollector)
+
+
+            {
+                string viewname = vp.Name;
+                Parameter P2 = vp.get_Parameter(BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP);
+                Element El2 = doc.GetElement(P2.AsElementId());
+                ElementId sheetdi2 = vp.SheetId;
+                var titleBlockId2 = new FilteredElementCollector(doc, sheetdi2).OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
+                Element tbf2 = doc.GetElement(titleBlockId2);
+                Element elemType2 = doc.GetElement(tbf2.GetTypeId());
+                Element sheeele = doc.GetElement(sheetdi2);
+               
+                if (El2 != null)
+
+                    {
+
+                using (Transaction t = new Transaction(doc, "Place Detail Line"))
+                {
+                    t.Start();
+
+                   
+
+                         
+
+                        if (
+                            El.Name == El2.Name
+                        && elemType1 == elemType2)
+
+                        {                       
+                                vp.SetBoxCenter(boxCenter);
+                        }
+
+                        t.Commit();
+                    }
+                }
+            }
+
+            return Result.Succeeded;
+        }
+    }
+}
