@@ -1,39 +1,87 @@
- using (Transaction t2 = new Transaction(doc))
-{
+     [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+
+            using (Transaction t2 = new Transaction(doc))
+            {
                 t2.Start("Transaction Name");
 
                 Dimension dim = doc.GetElement(uidoc.Selection.PickObject(ObjectType.Element)) as Dimension;
-                double total = 0;
-                string segmentsWithText = "";
-                string segmentsNoText = "";
-                string segmentValues = "";
-                foreach (DimensionSegment dimSeg in dim.Segments)
-                {
-
-                    //get dimension value in mm
-                    double dimValue = Convert.ToDouble(dimSeg.ValueString);
 
 
-                    if (dimValue % 205 == 0)
-                    {
-                        //if value == 10, add item to cut brick list
+                //get dimension value in mm
+                double dimValue = Convert.ToDouble(dim.ValueString);
 
 
-                        dim.Below = "B" + (dimValue / 205);
-                        
-                    }
+                if (dimValue % 205 == 0)
+
+                        try
+
+                        {
+
+                            //if value == 10, add item to cut brick list
+                            dim.Below = "B" + (dimValue / 205);
+
+                        }
+                        catch
+                        {
 
 
-                    if (dimValue % 102.5 == 0)
-                    {
-                        //if value == 10, add item to cut brick list
+                                if (dimValue % 102.5 == 0)
+
+                                    try
+                                    {
+                                        //if value == 10, add item to cut brick list
+                                        dim.Below = "B" + (dimValue / 205);
+
+                                    }
+                                    catch
+                                    {
+
+                                    }
 
 
-                        dim.Below = "B" + (dimValue / 205);
-                        
-                    }
-                }
-                t2.Commit();
+                            ///// brick dim multi segment
+                            ///
 
+                            foreach (DimensionSegment dimSeg in dim.Segments)
+                            {
+
+                                //get dimension value in mm
+                                double dimValue2 = Convert.ToDouble(dimSeg.ValueString);
+
+
+                                if (dimValue2 % 205 == 0)
+                                {
+                                    //if value == 10, add item to cut brick list
+                                    dimSeg.Below = "B" + (dimValue2 / 205);
+
+                                }
+
+
+                                if (dimValue2 % 102.5 == 0)
+                                {
+                                    //if value == 10, add item to cut brick list
+                                    dimSeg.Below = "B" + (dimValue2 / 205);
+
+                                }
+                            }
+
+                            t2.Commit();
+                        }
+
+                return Result.Succeeded;
             }
-
+        }
+    }
+}
