@@ -1,0 +1,60 @@
+    [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+            // Get the room center point.
+
+            List<Element> Rooms = new FilteredElementCollector(doc).OfClass(typeof(SpatialElement)).WhereElementIsNotElementType().Where(room => room.GetType() == typeof(Room)).ToList();
+            FilteredElementCollector rooms = new FilteredElementCollector(doc);
+            rooms.OfCategory(BuiltInCategory.OST_Rooms);
+
+            using (Transaction tx = new Transaction(doc))
+            {
+                tx.Start("Transaction Name");
+
+                foreach (Room room in Rooms)
+
+                {
+
+                    if (room.Location != null)
+
+                    {
+
+                        //get room center
+                        BoundingBoxXYZ bounding = room.get_BoundingBox(doc.ActiveView);
+                        XYZ center = (bounding.Max + bounding.Min) * 0.5;
+                        //XYZ roomcenter = new XYZ(center.X, center.Y, center.Z);
+
+                        //get active view
+                        View av = doc.ActiveView;
+
+                        LocationPoint location = room.Location as LocationPoint;
+
+                        LocationPoint locPt = (LocationPoint)room.Location;
+                        locPt.Point = center;
+
+
+                        //place symbol as a check on 
+                        FamilySymbol famsym = new FilteredElementCollector(doc).OfClass(typeof(Family)).OfType<Family>().FirstOrDefault(f => f.Name.Equals("TPB_Detail_Marker"))?.GetFamilySymbolIds().Select(ElementId => doc.GetElement(ElementId)).OfType<FamilySymbol>().FirstOrDefault(symbol => symbol.Name.Equals("Default"));
+                        FamilyInstance instance2 = doc.Create.NewFamilyInstance(center, famsym, av);
+
+                    }
+
+                }
+
+                    tx.Commit();
+                }
+
+                return Result.Succeeded;
+            }
+        }
+    }
