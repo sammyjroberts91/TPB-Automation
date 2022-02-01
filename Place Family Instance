@@ -1,0 +1,3 @@
+ //place symbol as a check on 
+                    FamilySymbol famsym = new FilteredElementCollector(doc).OfClass(typeof(Family)).OfType<Family>().FirstOrDefault(f => f.Name.Equals("TPB_Detail_Marker"))?.GetFamilySymbolIds().Select(ElementId => doc.GetElement(ElementId)).OfType<FamilySymbol>().FirstOrDefault(symbol => symbol.Name.Equals("Default"));
+                    FamilyInstance instance2 = doc.Create.NewFamilyInstance(center, famsym, av);
