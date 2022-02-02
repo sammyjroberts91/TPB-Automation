@@ -1,0 +1,3 @@
+ //get room center
+                        BoundingBoxXYZ bounding = room.get_BoundingBox(doc.ActiveView);
+                        XYZ center = (bounding.Max + bounding.Min) * 0.5;
