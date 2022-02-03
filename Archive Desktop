@@ -1,0 +1,74 @@
+    [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Autodesk.Revit.ApplicationServices.Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+
+            //Archive Extension
+
+            // Project Number
+            string fileName = doc.WorksharingCentralGUID + ".rvt";
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string collaborationDir = Path.Combine(localAppData, "Autodesk\\Revit\\Autodesk Revit " + doc.Application.VersionNumber, "CollaborationCache");
+            string file = Directory.GetFiles(collaborationDir, fileName, SearchOption.AllDirectories).FirstOrDefault(x => new FileInfo(x).Directory?.Name != "CentralCache");
+
+            //desktop
+            string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            ModelPath mp = ModelPathUtils.ConvertUserVisiblePathToModelPath(file);
+
+            //filename 
+            String number = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Number").AsString();
+            String orginator = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Originator").AsString();
+            String volume = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelVolumeCode").AsString();
+            String level = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelLevelCode").AsString();
+            String type = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Type").AsString();
+            String role = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Role").AsString();
+            String numbercode = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelNumberCode").AsString();
+
+            string tpbfilename = (number + "-" + orginator + "-" + volume + "-" + level + "-" + type + "-" + role + "-" + numbercode);    
+
+            string destinationPath = desktop;
+            string destinationFileName = fileName;
+            string sourceFile = System.IO.Path.Combine(file);
+            string destinationFile = System.IO.Path.Combine(destinationPath, destinationFileName);
+
+            DialogResult dialogResult = MessageBox.Show("Are you Sure", "This Button will Archive the Model", MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            { 
+           
+           
+            OpenOptions opt = new OpenOptions();
+            opt.DetachFromCentralOption = DetachFromCentralOption.DetachAndDiscardWorksets;
+            Document openedDoc = app.OpenDocumentFile(mp, opt);
+
+            // opened doc break for share file
+            SaveAsOptions options = new SaveAsOptions();
+            options.OverwriteExistingFile = true;
+            ModelPath modelPathout = ModelPathUtils.ConvertUserVisiblePathToModelPath(destinationPath + "\\" + tpbfilename);
+            openedDoc.SaveAs(modelPathout, options);      
+            }
+            else if (dialogResult == DialogResult.No)
+            {
+            }
+
+            TaskDialog.Show("Project Archive", "Your project has been Archived");
+
+
+            using (Transaction tx = new Transaction(doc))
+            {
+                tx.Start("Transaction Name");
+                tx.Commit();
+            }
+
+            return Result.Succeeded;
+        }
+    }
+}
