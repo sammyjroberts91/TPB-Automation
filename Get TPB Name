@@ -1,0 +1,9 @@
+//filename 
+            String number = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Number").AsString();
+            String orginator = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Originator").AsString();
+            String volume = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelVolumeCode").AsString();
+            String level = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelLevelCode").AsString();
+            String type = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Type").AsString();
+            String role = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelFileName-Role").AsString();
+            String numbercode = commandData.Application.ActiveUIDocument.Document.ProjectInformation.LookupParameter("TPB-SP_ModelNumberCode").AsString();
+            string tpbfilename = (number + "-" + orginator + "-" + volume + "-" + level + "-" + type + "-" + role + "-" + numbercode);    
