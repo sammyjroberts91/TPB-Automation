@@ -1,0 +1,6 @@
+Transaction transRot = new Transaction(doc);
+transRot.Start("RotateInteriorElevation");
+double rotation = 20 * Math.PI / 180.0;
+Line lineAsAxis = Line.CreateBound(new XYZ(point.X, point.Y, point.Z), new XYZ(point.X, point.Y, point.Z + 10));
+marker.Location.Rotate(lineAsAxis, rotation);
+transRot.Commit();
