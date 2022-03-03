@@ -1,0 +1,62 @@
+{
+    [Transaction(TransactionMode.Manual)]
+    public class Command : IExternalCommand
+    {
+        public Result Execute(
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
+        {
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Application app = uiapp.Application;
+            Document doc = uidoc.Document;
+
+            var sheet = (ViewSheet)doc.ActiveView;
+
+            PrintManager printManager = doc.PrintManager;
+            printManager.PrintToFile = true;
+            string Path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+            printManager.SelectNewPrintDriver("Bluebeam PDF");
+
+                printManager.PrintToFileName = Path + sheet.SheetNumber + ".pdf";
+                printManager.PrintToFile = true;
+                PrintSetup pSetup = printManager.PrintSetup;
+                PrintParameters pParam = pSetup.CurrentPrintSetting.PrintParameters;
+                pParam.ZoomType = ZoomType.Zoom;
+                pParam.PaperPlacement = PaperPlacementType.Center;
+                string pSize = "ISO_A3_(297.00_x_420.00_MM)";
+
+
+
+                foreach (PaperSize ps in printManager.PaperSizes)
+                {
+                    if (ps.Name.Equals(pSize))
+                    {
+                        printManager.PrintSetup.CurrentPrintSetting.PrintParameters.PaperSize = ps;
+                        break;
+                    }
+                }
+
+
+            using (Transaction t = new Transaction(doc, "testPrint"))
+
+            {
+
+                t.Start();
+
+                printManager.PrintSetup.SaveAs("test");
+
+                printManager.SubmitPrint(doc.ActiveView);
+
+                t.RollBack();
+
+            }
+
+
+            return Result.Succeeded;
+        }
+    }
+}
+A3
