@@ -1,0 +1,5 @@
+            string filepath = @"H:\\Office Updates\\BIM\\Toolkits\\TPB_Toolkit_Cabinatry.rte";string filepath = @"H:\\Office Updates\\BIM\\Toolkits\\TPB_Toolkit_Cabinatry.rte";
+            UIDocument uidoc2 = uiapp.OpenAndActivateDocument(filepath);
+            UIDocument uidoc2 = uiapp.OpenAndActivateDocument(filepath);
+            
+            
