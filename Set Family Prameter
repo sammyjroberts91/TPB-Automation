@@ -1,0 +1,1 @@
+familyInstance.LookupParameter("Tuerleibung_Breite").Set(Convert.ToDouble(800/304.8));
