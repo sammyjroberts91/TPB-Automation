@@ -1,0 +1,11 @@
+IEnumerable<View> views = new FilteredElementCollector(document)
+				.OfClass(typeof(View))
+				.Cast<View>()
+				.Where( v=> v.Name.Equals(templateName));
+View template = views.FirstOrDefault();
+ElementId templateId = template.Id;IEnumerable<View> views = new FilteredElementCollector(document)
+				.OfClass(typeof(View))
+				.Cast<View>()
+				.Where( v=> v.Name.Equals(templateName));
+View template = views.FirstOrDefault();
+ElementId templateId = template.Id;
