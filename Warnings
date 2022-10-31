@@ -1,0 +1,36 @@
+            IList<FailureMessage> failures = doc.GetWarnings();
+
+            IList<string> DescriptionList = new List<string>();
+            IList<string> SeverityList = new List<string>();
+            IList<string> TypeList = new List<string>();
+            IList<string> CategoryList = new List<string>();
+            IList<ElementId> elementIds = new List<ElementId>();    
+            IList<string> ElementList = new List<string>();         
+        
+            
+            foreach (FailureMessage failure in failures)
+            {
+                string descriptions = failure.GetDescriptionText();
+                DescriptionList.Add(descriptions);
+
+                string Severity = failure.GetSeverity().ToString();
+                SeverityList.Add(Severity);
+
+                string Type = failure.GetType().ToString();
+                TypeList.Add(Type);
+
+                ICollection<ElementId> ElementIds = failure.GetFailingElements();                
+
+                foreach (ElementId eid in ElementIds)
+                {
+                    Element ele = doc.GetElement(eid);
+                    string ElementName = ele.ToString();
+                    ElementList.Add(ElementName);
+                    string cat = ele.Category.ToString();
+                    CategoryList.Add(cat);
+
+                }     
+                
+
+            }
+            
